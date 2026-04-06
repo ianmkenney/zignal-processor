@@ -1,0 +1,3 @@
+#+TITLE: zignal
+
+A toy signal processing library and application.
