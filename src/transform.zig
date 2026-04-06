@@ -24,12 +24,12 @@ pub fn dft(comptime T: type, spectrum: []Complex(T), samples: []const Complex(T)
 pub fn idft(comptime T: type, signal: []Complex(T), spectrum: []const Complex(T), n: usize) void {
     const N = @as(T, @floatFromInt(spectrum.len));
     var sum: Complex(T) = .init(0, 0);
-    for (0..(spectrum.len / 2)) |k| {
+    for (0..(spectrum.len)) |k| {
         const w = spectrum[k];
         const power: Complex(T) = .init(0, 2.0 * std.math.pi * @as(T, @floatFromInt(k * n)) / N);
         sum = sum.add(w.mul(std.math.complex.exp(power)));
     }
-    signal[n] = sum.div(Complex(T).init(N / 2, 0));
+    signal[n] = sum.div(Complex(T).init(N, 0));
 }
 
 /// Calculate the power spectrum of a signal's spectrum.
