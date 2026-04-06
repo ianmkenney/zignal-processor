@@ -1,13 +1,43 @@
 const std = @import("std");
 const Complex = std.math.Complex;
 
+fn Signal(comptime T: type, comptime size: usize) type {
+    return struct {
+        data: [size]Complex(T),
+        const Self = @This();
+
+        fn init() Self {
+            return Self{ .data = undefined };
+        }
+
+        fn write(self: Self, filename: []const u8) !void {
+            try write_complex(T, filename, &self.data);
+        }
+    };
+}
+
+fn Spectrum(comptime T: type, comptime size: usize) type {
+    return struct {
+        data: [size]Complex(T),
+        const Self = @This();
+
+        fn init() Self {
+            return Self{ .data = undefined };
+        }
+
+        fn write(self: Self, filename: []const u8) !void {
+            try write_complex(T, filename, &self.data);
+        }
+    };
+}
+
 /// Write complex sequence to file.
 ///
 /// File has three tab-separated columns:
 /// 1. Data index
 /// 2. Real component
 /// 3. Complex component
-fn write(comptime T: type, filename: []const u8, signal: []Complex(T)) !void {
+fn write_complex(comptime T: type, filename: []const u8, signal: []const Complex(T)) !void {
     const file = try std.fs.cwd().createFile(
         filename,
         .{ .read = true },
@@ -94,9 +124,9 @@ pub fn main() !void {
     const n_samples = 32;
     const precision = f32;
 
-    var samples: [n_samples]Complex(precision) = undefined;
-    var spectrum: [n_samples]Complex(precision) = undefined;
-    var recon: [n_samples]Complex(precision) = undefined;
+    var samples = Signal(precision, n_samples).init();
+    var spectrum = Spectrum(precision, n_samples).init();
+    var recon = Signal(precision, n_samples).init();
 
     for (0..n_samples) |i| {
         const n: precision = @as(precision, @floatFromInt(i));
@@ -104,23 +134,23 @@ pub fn main() !void {
         // sin(5 t) + cos(7 t) + 3
         const value: Complex(precision) = .init(std.math.sin(2 * 5 * std.math.pi * n / n_samples) +
             std.math.cos(2 * 7 * std.math.pi * n / n_samples) + 3, 0);
-        samples[i] = value;
+        samples.data[i] = value;
     }
 
     for (0..n_samples) |k| {
-        dft(precision, &spectrum, &samples, k);
+        dft(precision, &spectrum.data, &samples.data, k);
     }
 
     for (0..n_samples) |n| {
-        idft(precision, &recon, &spectrum, n);
+        idft(precision, &recon.data, &spectrum.data, n);
     }
 
-    var psts = try power_spectrum_two_sided(precision, &spectrum, std.heap.page_allocator);
+    var psts = try power_spectrum_two_sided(precision, &spectrum.data, std.heap.page_allocator);
     defer psts.deinit(std.heap.page_allocator);
 
-    try write(precision, "original.dat", &samples);
-    try write(precision, "data.dat", &spectrum);
-    try write(precision, "recon.dat", &recon);
+    try samples.write("original.dat");
+    try spectrum.write("data.dat");
+    try recon.write("recon.dat");
     var values = try read(precision, "recon.dat", std.heap.page_allocator);
     defer values.deinit(std.heap.page_allocator);
 }
