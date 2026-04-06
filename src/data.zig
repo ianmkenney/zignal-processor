@@ -23,7 +23,7 @@ pub fn Signal(comptime T: type, comptime size: usize) type {
                 transform.dft(T, &spectrum.data, &self.data, k);
             }
 
-            return Spectrum(T, size).init();
+            return spectrum;
         }
 
         pub fn initFn(func: fn (T) Complex(T)) Self {
