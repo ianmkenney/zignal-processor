@@ -4,6 +4,8 @@ const Complex = std.math.Complex;
 const Signal = @import("data.zig").Signal;
 const Spectrum = @import("data.zig").Spectrum;
 
+const config = @import("config");
+
 fn sample_signal(comptime T: type) (fn (T) Complex(T)) {
     const inner = struct {
         fn _sample_signal(t: T) Complex(T) {
@@ -16,7 +18,7 @@ fn sample_signal(comptime T: type) (fn (T) Complex(T)) {
 
 pub fn main() !void {
     const n_samples = 32;
-    const precision = f64;
+    const precision = if (config.enabledouble) f64 else f32;
 
     var samples = Signal(precision, n_samples).initFn(sample_signal(precision));
     var spectrum = samples.dft();

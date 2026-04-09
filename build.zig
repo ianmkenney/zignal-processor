@@ -14,6 +14,11 @@ pub fn build(b: *std.Build) void {
         }),
     });
 
+    const precision = b.option(bool, "double", "use double precision") orelse false;
+    const options = b.addOptions();
+    options.addOption(bool, "enabledouble", precision);
+    exe.root_module.addOptions("config", options);
+
     b.installArtifact(exe);
 
     const run_exe = b.addRunArtifact(exe);
