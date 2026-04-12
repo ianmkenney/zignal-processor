@@ -1,6 +1,14 @@
 const std = @import("std");
 const Complex = std.math.Complex;
 
+fn Entry(comptime T: type) type {
+    return struct {
+        idx: usize,
+        re: T,
+        im: T,
+    };
+}
+
 /// Write complex sequence to file.
 ///
 /// File has three tab-separated columns:
@@ -16,9 +24,8 @@ pub fn write_complex(
     defer file.close();
 
     for (signal, 0..) |data, i| {
-        _ = try file.write(std.mem.asBytes(&i));
-        _ = try file.write(std.mem.asBytes(&data.re));
-        _ = try file.write(std.mem.asBytes(&data.im));
+        const entry: Entry(T) = .{ .idx = i, .re = data.re, .im = data.im };
+        _ = try file.write(std.mem.asBytes(&entry));
     }
 }
 
@@ -37,9 +44,8 @@ pub fn read(comptime T: type, filename: []const u8, allocator: std.mem.Allocator
     const width = 2 * @sizeOf(T) + @sizeOf(usize);
 
     while (file_reader.interface.take(width) catch null) |line| {
-        const re = std.mem.bytesToValue(T, line[@sizeOf(usize) .. @sizeOf(usize) + @sizeOf(T)]);
-        const im = std.mem.bytesToValue(T, line[@sizeOf(usize) + @sizeOf(T) ..]);
-        const value: std.math.Complex(T) = .init(re, im);
+        const entry = std.mem.bytesToValue(Entry(T), line);
+        const value: std.math.Complex(T) = .init(entry.re, entry.im);
         try array.append(allocator, value);
     }
 
